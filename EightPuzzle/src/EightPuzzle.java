@@ -1,4 +1,5 @@
-import java.util.Random;
+import java.io.File;
+import java.util.*;
 
 public class EightPuzzle
 {
@@ -6,6 +7,21 @@ public class EightPuzzle
 	// state of puzzle
 	private String state;
 	private final String solvedState = "b12 345 678";
+
+	/**
+	 * Creates a new EightPuzzle that reads from a file
+	 * @param file file to read to set initial state
+	 */
+	public EightPuzzle(String file)
+	{
+		try
+		{
+			state = new Scanner(new File(file)).nextLine().substring(0, 11);
+		} catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
 
 	// Possible directions to move
 	enum move
@@ -37,7 +53,7 @@ public class EightPuzzle
 	 */
 	public void printState()
 	{
-		System.out.println(this);
+		System.out.println(state);
 	}
 
 	/**
@@ -112,6 +128,9 @@ public class EightPuzzle
 
 	public static void main(String[] args)
 	{
-		System.out.println("Hello, World!");
+		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
+		System.out.println(puzzle + " " + puzzle.isSolved());
+		puzzle.setState("b12 345 678");
+		System.out.println(puzzle + " " + puzzle.isSolved());
 	}
 }
