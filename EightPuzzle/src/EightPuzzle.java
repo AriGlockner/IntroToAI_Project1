@@ -4,133 +4,56 @@ import java.util.*;
 public class EightPuzzle
 {
 
-	// state of puzzle
-	private String state;
-	private final String solvedState = "b12 345 678";
+	private char[][] state = new char[3][];
 
-	/**
-	 * Creates a new EightPuzzle that reads from a file
-	 * @param file file to read to set initial state
-	 */
 	public EightPuzzle(String file)
 	{
 		try
 		{
-			state = new Scanner(new File(file)).nextLine().substring(0, 11);
+			setState(new Scanner(new File(file)).nextLine().substring(0, 11));
+
 		} catch (Exception e)
 		{
 			throw new RuntimeException(e);
 		}
 	}
 
-	// Possible directions to move
-	enum move
-	{
-		up, down, left, right
-	}
-
 	/**
-	 * Sets the puzzle's state.
+	 * Sets the puzzle state
 	 *
-	 * @param state specifies the puzzle tile positions with a sequence of 3 groups of 3 digits with the blank tile
-	 *              represented by the letter 'b'. For example, '1b5' specifies a row with 1 in the left tile, nothing in the middle, and 5 in the right tile. The goal state is "b12 345 678"
+	 * @param newState 'b' represents blank and numbers represent numbers. For example, '1b5' specifies a row with 1
+	 * in the left tile, nothing in the middle tile and 5 in the right tile
 	 */
-	public void setState(String state)
+	public void setState(String newState)
 	{
-		this.state = state;
+		state[0] = new char[] {newState.charAt(0), newState.charAt(1), newState.charAt(2)};
+		state[1] = new char[] {newState.charAt(4), newState.charAt(5), newState.charAt(6)};
+		state[2] = new char[] {newState.charAt(8), newState.charAt(9), newState.charAt(10)};
 	}
 
-	/**
-	 * @return true if puzzle is solved
-	 */
-	private boolean isSolved()
-	{
-		return state.equals(solvedState);
-	}
-
-	/**
-	 * Prints the current puzzle state
-	 */
 	public void printState()
 	{
-		System.out.println(state);
+		StringBuilder stringBuilder = new StringBuilder();
+		for (char[] c1 : state)
+		{
+			for (char c2 : c1)
+				stringBuilder.append(c2);
+			stringBuilder.append(" ");
+		}
+		System.out.println(stringBuilder.substring(0, 11));
 	}
 
-	/**
-	 * @return state of puzzle
-	 */
+	//TODO: Remove when done
 	@Override
 	public String toString()
 	{
-		return state;
-	}
-
-	/**
-	 * Move the blank tile 'up', 'down', 'left', or 'right'
-	 *
-	 * @param direction
-	 * @return
-	 */
-	public boolean move(Enum direction)
-	{
-		return false;
-	}
-
-	/**
-	 * Makes n random moves from the goal state. Note that the goal state is not reachable from all puzzle states,
-	 * so this method of randomizing the puzzle ensures that a solution exists
-	 *
-	 * @param n number of random moves to make
-	 */
-	public void randomizeState(int n)
-	{
-		while (n > 0)
-			if (move(move.up)) // replace move.up with a random direction
-				n--;
-	}
-
-
-	/**
-	 * Solve the puzzle from its current state using A-star search using heuristic equal to "h1" or "h2" (see section
-	 * 3.6, p. 102). Briefly, h1 is the number of misplaced tiles; h2 is the sum of the distances of the tiles from
-	 * their goal positions. You are free to try other heuristics, but be sure that they are admissible and describe
-	 * them in your writeup. When the goal is found, your code should print the number of tile moves needed to obtain
-	 * the solution followed by the solution as a sequence of moves (up, down, left, right) from the starting state to
-	 * the goal state
-	 */
-	public void solveAStar()
-	{
-
-	}
-
-	/**
-	 * Solve the puzzle from its current state by adapting local beam search with k states. You will need to define an
-	 * evaluation function which you should describe in your writeup. It should have a minimum of zero at the goal
-	 * state. When the goal is found, print the number of tile moves and solution as for A-star search
-	 *
-	 * @param k number of states
-	 */
-	public void solveBeam(int k)
-	{
-
-	}
-
-	/**
-	 * Specifies the maximum number of nodes to be considered during a search. If this limit is exceeded during a search
-	 * an error message should be printed
-	 *
-	 * @param n number of nodes to search
-	 */
-	public void maxNodes(int n)
-	{
-
+		return Arrays.toString(state[0]) + "\n" + Arrays.toString(state[1]) + "\n" + Arrays.toString(state[2]);
 	}
 
 	public static void main(String[] args)
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
-		System.out.println(puzzle + " " + puzzle.isSolved());
-		puzzle.setState("b12 345 678");
-		System.out.println(puzzle + " " + puzzle.isSolved());
+		puzzle.printState();
+		System.out.println(puzzle);
 	}
 }
