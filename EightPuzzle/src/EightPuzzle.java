@@ -4,6 +4,7 @@ import java.util.*;
 public class EightPuzzle
 {
 	private String state;
+	private final String goalState = "b12 345 678";
 
 	public EightPuzzle(String file)
 	{
@@ -111,16 +112,49 @@ public class EightPuzzle
 		state = stringBuilder.substring(0, 11);
 	}
 
+	//TODO: Find a way to make sure random state cannot undo the prior move
+	public void randomizeState(int n)
+	{
+		// resets state
+		setState(goalState);
+
+		Random random = new Random();
+		Direction[] directions = new Direction[] {Direction.up, Direction.down, Direction.right, Direction.left};
+		Direction lastDirection = null;
+
+		while (n > 0)
+		{
+			Direction nextDirection = directions[random.nextInt(4)];
+			//boolean notReturningToPreviousState =
+
+			if (/*lastDirection != nextDirection && */move(nextDirection))
+			{
+				n--;
+				lastDirection = nextDirection;
+			}
+		}
+	}
+
 	public static void main(String[] args)
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 		//puzzle.printState();
-		System.out.println(puzzle);
+		//System.out.println(puzzle);
+		/*
 		System.out.println(puzzle.move(Direction.left) + ":\n" + puzzle);
 		System.out.println(puzzle.move(Direction.right) + ":\n" + puzzle);
 		System.out.println(puzzle.move(Direction.left) + ":\n" + puzzle);
 		System.out.println(puzzle.move(Direction.up) + ":\n" + puzzle);
 		System.out.println(puzzle.move(Direction.up) + ":\n" + puzzle);
 		System.out.println(puzzle.move(Direction.down) + ":\n" + puzzle);
+		 */
+		puzzle.randomizeState(0);
+		System.out.println("Puzzle:\n" + puzzle + "\n");
+
+		for (int i = 0; i < 10; i++)
+		{
+			puzzle.randomizeState(2);
+			System.out.println("Puzzle:\n" + puzzle + "\n");
+		}
 	}
 }
