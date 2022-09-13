@@ -303,6 +303,8 @@ public class EightPuzzle
 		}
 	}
 
+	// TODO: Error is that method will print out all states checked instead of
+	// just printing out the states necessary to get to the solved state
 	public void BFS()
 	{
 		// list of already encountered states
