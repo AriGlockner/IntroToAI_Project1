@@ -1,6 +1,5 @@
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class EightPuzzle
 {
@@ -11,7 +10,7 @@ public class EightPuzzle
 	static class State
 	{
 		private String state;
-		private LinkedList<String> pathToState;
+		private final LinkedList<String> pathToState;
 
 		public State(String state)
 		{
@@ -330,6 +329,7 @@ public class EightPuzzle
 				System.out.println("Path is:");
 				for (String s : currentState.pathToState)
 					System.out.println(s);
+				System.out.println(currentState.state);
 				return;
 			}
 
@@ -342,24 +342,24 @@ public class EightPuzzle
 				State s;
 
 				// Add left if possible
-				s = getMove(currentState.clone(), Direction.left);
-				if (s != null)
-					queue.offer(s);
+				State l = getMove(currentState.clone(), Direction.left);
+				if (l != null)
+					queue.offer(l);
 
 				// Add right if possible
-				s = getMove(currentState.clone(), Direction.right);
-				if (s != null)
-					queue.offer(s);
+				State r = getMove(currentState.clone(), Direction.right);
+				if (r != null)
+					queue.offer(r);
 
 				// Add up if possible
-				s = getMove(currentState.clone(), Direction.up);
-				if (s != null)
-					queue.offer(s);
+				State u = getMove(currentState.clone(), Direction.up);
+				if (u != null)
+					queue.offer(u);
 
 				// Add down if possible
-				s = getMove(currentState.clone(), Direction.down);
-				if (s != null)
-					queue.offer(s);
+				State d = getMove(currentState.clone(), Direction.down);
+				if (d != null)
+					queue.offer(d);
 			}
 		}
 
@@ -382,7 +382,7 @@ public class EightPuzzle
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 
-		//puzzle.randomizeState(2);
+		//puzzle.randomizeState(10);
 
 		puzzle.setState("12b 345 678");
 
@@ -392,6 +392,6 @@ public class EightPuzzle
 
 		puzzle.BFS();
 
-		puzzle.printState();
+		//puzzle.printState();
 	}
 }
