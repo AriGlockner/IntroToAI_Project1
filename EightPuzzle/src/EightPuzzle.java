@@ -1,10 +1,47 @@
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class EightPuzzle
 {
 	private String state;
 	private final String goalState = "b12 345 678";
+	private int maxNodes = Integer.MAX_VALUE;
+
+	static class State
+	{
+		private String state;
+		private LinkedList<String> pathToState;
+
+		public State(String state)
+		{
+			this.state = state;
+			pathToState = new LinkedList<>();
+			//pathToState.add(state);
+		}
+
+		public State(String state, LinkedList<String> pathToState)
+		{
+			this.state = state;
+			this.pathToState = pathToState;
+			if (pathToState.size() == 0 || !pathToState.getLast().equals(state))
+				this.pathToState.add(state);
+		}
+
+		public State clone()
+		{
+			return new State(state, pathToState);
+		}
+
+
+		@Override
+		public boolean equals(Object o)
+		{
+			if (o instanceof State)
+				return state.equals(((State) o).state);
+			return false;
+		}
+	}
 
 	public EightPuzzle(String file)
 	{
@@ -22,7 +59,7 @@ public class EightPuzzle
 	 * Sets the puzzle state
 	 *
 	 * @param newState 'b' represents blank and numbers represent numbers. For example, '1b5' specifies a row with 1
-	 * in the left tile, nothing in the middle tile and 5 in the right tile
+	 *                 in the left tile, nothing in the middle tile and 5 in the right tile
 	 */
 	public void setState(String newState)
 	{
@@ -51,7 +88,8 @@ public class EightPuzzle
 		return state.replaceAll(" ", "\n");
 	}
 
-	public enum Direction {
+	public enum Direction
+	{
 		up, down, left, right
 	}
 
@@ -77,25 +115,62 @@ public class EightPuzzle
 		if (direction.equals(Direction.left))
 			swap(blankIndex, blankIndex - 1);
 
-		// Swap right
+			// Swap right
 		else if (direction.equals(Direction.right))
 			swap(blankIndex, blankIndex + 1);
 
-		// Swap up
+			// Swap up
 		else if (direction.equals(Direction.up))
 			swap(blankIndex, blankIndex - 4);
 
-		// Swap down
+			// Swap down
 		else
 			swap(blankIndex, blankIndex + 4);
 
 		return true;
 	}
 
+	private State getMove(State state, Direction direction)
+	{
+		// where blank is at in puzzle
+		int blankIndex = state.state.indexOf('b');
+
+		// Unable to move left
+		if (direction.equals(Direction.left) && blankIndex % 4 == 0)
+			return null;
+		// Unable to move right
+		if (direction.equals(Direction.right) && blankIndex % 4 == 2)
+			return null;
+		// Unable to move up
+		if (direction.equals(Direction.up) && blankIndex < 3)
+			return null;
+		// Unable to move down
+		if (direction.equals(Direction.down) && blankIndex > 7)
+			return null;
+
+		// Swap left
+		if (direction.equals(Direction.left))
+			stateSwap(state, blankIndex, blankIndex - 1);
+
+			// Swap right
+		else if (direction.equals(Direction.right))
+			stateSwap(state, blankIndex, blankIndex + 1);
+
+			// Swap up
+		else if (direction.equals(Direction.up))
+			stateSwap(state, blankIndex, blankIndex - 4);
+
+			// Swap down
+		else
+			stateSwap(state, blankIndex, blankIndex + 4);
+
+		return state;
+	}
+
 	/**
 	 * Helper method that preforms swapping function for move method
 	 *
- 	 * @param blankIndex index where the blank tile is at
+	 * @param blankIndex    index where the blank tile is at
 	 * @param newBlankIndex index where blank index is going to be
 	 */
 	private void swap(int blankIndex, int newBlankIndex)
@@ -110,6 +185,20 @@ public class EightPuzzle
 		for (char c : stateArray)
 			stringBuilder.append(c);
 		state = stringBuilder.substring(0, 11);
+	}
+
+	private void stateSwap(State state, int blankIndex, int newBlankIndex)
+	{
+		// swap
+		char[] stateArray = state.state.toCharArray();
+		stateArray[blankIndex] = stateArray[newBlankIndex];
+		stateArray[newBlankIndex] = 'b';
+
+		// convert array to String
+		StringBuilder stringBuilder = new StringBuilder();
+		for (char c : stateArray)
+			stringBuilder.append(c);
+		state.state = stringBuilder.substring(0, 11);
 	}
 
 	//TODO: Find a way to make sure random state cannot undo the prior move
@@ -135,26 +224,174 @@ public class EightPuzzle
 		}
 	}
 
+	public void solveAStar()
+	{
+		// Initialize Open List
+		List<State> openList = new ArrayList<>(); // TODO: maybe change type of list
+
+		// Initialize Closed List and put starting node on open list
+		List<State> closedList = new ArrayList<>(); // TODO: maybe change type of list
+
+		// put starting node at 0
+		openList.add(new State(state));
+
+		// while Open List is not empty
+		while (!openList.isEmpty())
+		{
+			// Find the node with the least f on the open list, call it q
+		}
+	}
+
+	public void solveBeam()
+	{
+
+
+		// List of States that have already been encountered
+		HashSet<State> encountered = new HashSet<>();
+
+		// List of future states to check
+		Queue<State> nextStates = new ArrayDeque<>();
+		nextStates.offer(new State(state));
+
+		//
+		int nodesCounted = 0;
+
+		while (nodesCounted < maxNodes && !nextStates.isEmpty())
+		{
+			State testState = nextStates.remove();
+
+			// make sure testState has not already been checked
+			if (!encountered.contains(testState))
+			{
+				nodesCounted++;
+
+				// testState is the destination
+				if (testState.state.equals(goalState))
+				{
+					System.out.println("Success!\nNumber of nodes counted is: " + nodesCounted);
+					System.out.println("Path is:");
+					System.out.println(goalState);
+					for (String s : testState.pathToState)
+						System.out.println(s);
+					return;
+				}
+
+				// testState is not the destination
+				// Set testState as encountered
+				encountered.add(testState);
+
+				// add possible moves
+				// left
+				State move = getMove(testState.clone(), Direction.left);
+				if (move != null)
+					nextStates.add(move);
+
+				// right
+				move = getMove(testState.clone(), Direction.right);
+				if (move != null)
+					nextStates.add(move);
+
+				// up
+				move = getMove(testState.clone(), Direction.up);
+				if (move != null)
+					nextStates.add(move);
+
+				// down
+				move = getMove(testState.clone(), Direction.down);
+				if (move != null)
+					nextStates.add(move);
+			}
+		}
+	}
+
+	public void BFS()
+	{
+		// list of already encountered states
+		HashSet<State> encountered = new HashSet<>();
+
+		// Queue
+		Queue<State> queue = new LinkedList<>();
+		queue.add(new State(state));
+
+		// make sure program does not check too many states
+		int nodesCounted = 0;
+
+
+		while (queue.size() > 0 && nodesCounted < maxNodes)
+		{
+			// remove 1st element from queue to test
+			State currentState = queue.poll();
+
+			// If element to test is the goal state
+			if (currentState.state.equals(goalState))
+			{
+				System.out.println(currentState.state + " = " + goalState);
+				System.out.println("Success!");
+				System.out.println("Path is:");
+				for (String s : currentState.pathToState)
+					System.out.println(s);
+				return;
+			}
+
+			// If element has not already been checked
+			if (!encountered.contains(currentState))
+			{
+				nodesCounted++;
+				encountered.add(currentState);
+
+				State s;
+
+				// Add left if possible
+				s = getMove(currentState.clone(), Direction.left);
+				if (s != null)
+					queue.offer(s);
+
+				// Add right if possible
+				s = getMove(currentState.clone(), Direction.right);
+				if (s != null)
+					queue.offer(s);
+
+				// Add up if possible
+				s = getMove(currentState.clone(), Direction.up);
+				if (s != null)
+					queue.offer(s);
+
+				// Add down if possible
+				s = getMove(currentState.clone(), Direction.down);
+				if (s != null)
+					queue.offer(s);
+			}
+		}
+
+		// Error
+	}
+
+	/**
+	 * Specifies the maximum number of nodes to be considered during a search.  If this limit is
+	 * exceeded during search an error message should be printed
+	 *
+	 * @param newMaxNodes maximum number of nodes to be considered during a search
+	 */
+	public void maxNodes(int newMaxNodes)
+	{
+		maxNodes = newMaxNodes;
+	}
+
+
 	public static void main(String[] args)
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
-		//puzzle.printState();
-		//System.out.println(puzzle);
-		/*
-		System.out.println(puzzle.move(Direction.left) + ":\n" + puzzle);
-		System.out.println(puzzle.move(Direction.right) + ":\n" + puzzle);
-		System.out.println(puzzle.move(Direction.left) + ":\n" + puzzle);
-		System.out.println(puzzle.move(Direction.up) + ":\n" + puzzle);
-		System.out.println(puzzle.move(Direction.up) + ":\n" + puzzle);
-		System.out.println(puzzle.move(Direction.down) + ":\n" + puzzle);
-		 */
-		puzzle.randomizeState(0);
-		System.out.println("Puzzle:\n" + puzzle + "\n");
 
-		for (int i = 0; i < 10; i++)
-		{
-			puzzle.randomizeState(2);
-			System.out.println("Puzzle:\n" + puzzle + "\n");
-		}
+		//puzzle.randomizeState(2);
+
+		puzzle.setState("12b 345 678");
+
+		puzzle.printState();
+
+		//puzzle.solveBeam();
+
+		puzzle.BFS();
+
+		puzzle.printState();
 	}
 }
