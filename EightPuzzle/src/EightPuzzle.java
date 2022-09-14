@@ -10,7 +10,7 @@ public class EightPuzzle
 	static class State
 	{
 		private String state;
-		private final LinkedList<String> pathToState;
+		private LinkedList<String> pathToState;
 
 		public State(String state)
 		{
@@ -23,15 +23,92 @@ public class EightPuzzle
 		{
 			this.state = state;
 			this.pathToState = pathToState;
-			if (pathToState.size() == 0 || !pathToState.getLast().equals(state))
-				this.pathToState.add(state);
+			//if (pathToState.size() == 0 || !pathToState.getLast().equals(state))
+			//	this.pathToState.add(state);
 		}
 
-		public State clone()
+		public static State clone(State s)
 		{
-			return new State(state, pathToState);
+			//return new State(state, pathToState);
+			/*
+			State s = new State(state, pathToState);
+			s.pathToState = this.pathToState;
+
+			//System.out.println(state + ":\t" + pathToState);
+
+			return s;
+			 */
+			return new State(s.state, (LinkedList<String>) s.pathToState.clone());
 		}
 
+		public boolean move(Direction direction)
+		{
+			// where blank is at in puzzle
+			int blankIndex = state.indexOf('b');
+
+			// Unable to move left
+			if (direction.equals(Direction.left) && blankIndex % 4 == 0)
+				return false;
+			// Unable to move right
+			if (direction.equals(Direction.right) && blankIndex % 4 == 2)
+				return false;
+			// Unable to move up
+			if (direction.equals(Direction.up) && blankIndex < 3)
+				return false;
+			// Unable to move down
+			if (direction.equals(Direction.down) && blankIndex > 7)
+				return false;
+
+			// Swap left
+			if (direction.equals(Direction.left))
+				swap(blankIndex, blankIndex - 1);
+
+				// Swap right
+			else if (direction.equals(Direction.right))
+				swap(blankIndex, blankIndex + 1);
+
+				// Swap up
+			else if (direction.equals(Direction.up))
+				swap(blankIndex, blankIndex - 4);
+
+				// Swap down
+			else
+				swap(blankIndex, blankIndex + 4);
+
+			return true;
+		}
+
+		private boolean canMove(Direction direction)
+		{
+			// where blank is at in puzzle
+			int blankIndex = state.indexOf('b');
+
+			// Unable to move left
+			if (direction.equals(Direction.left) && blankIndex % 4 == 0)
+				return false;
+			// Unable to move right
+			if (direction.equals(Direction.right) && blankIndex % 4 == 2)
+				return false;
+			// Unable to move up
+			if (direction.equals(Direction.up) && blankIndex < 3)
+				return false;
+			// Unable to move down
+			return !direction.equals(Direction.down) || blankIndex <= 7;
+		}
+
+		private void swap(int blankIndex, int newBlankIndex)
+		{
+			// swap
+			char[] stateArray = state.toCharArray();
+			stateArray[blankIndex] = stateArray[newBlankIndex];
+			stateArray[newBlankIndex] = 'b';
+
+			// convert array to String
+			StringBuilder stringBuilder = new StringBuilder();
+			for (char c : stateArray)
+				stringBuilder.append(c);
+			state = stringBuilder.substring(0, 11);
+		}
 
 		@Override
 		public boolean equals(Object o)
@@ -67,16 +144,6 @@ public class EightPuzzle
 
 	public void printState()
 	{
-		/*
-		StringBuilder stringBuilder = new StringBuilder();
-		for (char[] c1 : state)
-		{
-			for (char c2 : c1)
-				stringBuilder.append(c2);
-			stringBuilder.append(" ");
-		}
-		System.out.println(stringBuilder.substring(0, 11));
-		 */
 		System.out.println(state);
 	}
 
@@ -241,6 +308,7 @@ public class EightPuzzle
 		}
 	}
 
+	/*
 	public void solveBeam()
 	{
 
@@ -302,7 +370,7 @@ public class EightPuzzle
 			}
 		}
 	}
-
+	*/
 	// TODO: Error is that method will print out all states checked instead of
 	// just printing out the states necessary to get to the solved state
 	public void BFS()
@@ -332,6 +400,7 @@ public class EightPuzzle
 				for (String s : currentState.pathToState)
 					System.out.println(s);
 				System.out.println(currentState.state);
+				setState(goalState);
 				return;
 			}
 
@@ -341,27 +410,98 @@ public class EightPuzzle
 				nodesCounted++;
 				encountered.add(currentState);
 
-				State s;
+				//System.out.println(currentState.state + ":\t" + currentState.pathToState);
+				System.out.println(currentState.state);
 
+				// TODO:
+				// Objects should be cloned
+				// Not all states should be printed out
+
+				// left
+				State left = currentState.clone(currentState);
+				if (left.canMove(Direction.left))
+				{
+					left.pathToState.add(currentState.state);
+					left.move(Direction.left);
+					System.out.println("Left:\t" + left.state + ":\t" + left.pathToState);
+					queue.add(left);
+				}
+
+				// right
+				State right = currentState.clone(currentState);
+				if (right.canMove(Direction.right))
+				{
+					right.pathToState.add(currentState.state);
+					right.move(Direction.right);
+					System.out.println("Right:\t" + right.state + ":\t" + right.pathToState);
+					queue.add(right);
+				}
+
+				// up
+				State up = currentState.clone(currentState);
+				if (up.canMove(Direction.up))
+				{
+					up.pathToState.add(currentState.state);
+					up.move(Direction.up);
+					System.out.println("Up:\t" + up.state + ":\t" + up.pathToState);
+					queue.add(up);
+				}
+
+				// down
+				State down = currentState.clone(currentState);
+				if (down.canMove(Direction.down))
+				{
+					down.pathToState.add(currentState.state);
+					down.move(Direction.down);
+					System.out.println("Down:\t" + down.state + ":\t" + down.pathToState);
+					queue.add(down);
+				}
+
+				/*
+				State left = currentState.clone();
+				if (left.move(Direction.left))
+					queue.add(left);
+
+				State right = currentState.clone();
+				if (right.move(Direction.right))
+					queue.add(right);
+
+				State up = currentState.clone();
+				if (up.move(Direction.up))
+					queue.add(up);
+
+				State down = currentState.clone();
+				if (down.move(Direction.down))
+					queue.add(down);
+
+				//System.out.println(currentState.state + ":\t" + left.state + "\t\t" + right.state + "\t\t" + up.state + "\t\t" + down.state);
+
+				/*
 				// Add left if possible
 				State l = getMove(currentState.clone(), Direction.left);
+				State r = getMove(currentState.clone(), Direction.right);
+				State u = getMove(currentState.clone(), Direction.up);
+				State d = getMove(currentState.clone(), Direction.down);
+
+				// Add left if possible
 				if (l != null)
-					queue.offer(l);
+					queue.offer(new State(l.state, currentState));
 
 				// Add right if possible
-				State r = getMove(currentState.clone(), Direction.right);
+				//State r = getMove(currentState.clone(), Direction.right);
 				if (r != null)
-					queue.offer(r);
+					queue.offer(new State(r.state, currentState));
 
 				// Add up if possible
-				State u = getMove(currentState.clone(), Direction.up);
+				//State u = getMove(currentState.clone(), Direction.up);
 				if (u != null)
-					queue.offer(u);
+					queue.offer(new State(u.state, currentState));
 
 				// Add down if possible
-				State d = getMove(currentState.clone(), Direction.down);
+				//State d = getMove(currentState.clone(), Direction.down);
 				if (d != null)
-					queue.offer(d);
+					queue.offer(new State(d.state, currentState));
+				 */
 			}
 		}
 
@@ -388,7 +528,7 @@ public class EightPuzzle
 
 		puzzle.setState("12b 345 678");
 
-		puzzle.printState();
+		//puzzle.printState();
 
 		//puzzle.solveBeam();
 
