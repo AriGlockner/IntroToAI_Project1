@@ -10,35 +10,28 @@ public class EightPuzzle
 	static class State
 	{
 		private String state;
-		private LinkedList<String> pathToState;
+		private final LinkedList<String> pathToState;
+
+		private final LinkedList<Direction> directionsToState;
 
 		public State(String state)
 		{
 			this.state = state;
 			pathToState = new LinkedList<>();
+			directionsToState = new LinkedList<>();
 			//pathToState.add(state);
 		}
 
-		public State(String state, LinkedList<String> pathToState)
+		public State(String state, LinkedList<String> pathToState, LinkedList<Direction> directions)
 		{
 			this.state = state;
 			this.pathToState = pathToState;
-			//if (pathToState.size() == 0 || !pathToState.getLast().equals(state))
-			//	this.pathToState.add(state);
+			directionsToState = directions;
 		}
 
 		public static State clone(State s)
 		{
-			//return new State(state, pathToState);
-			/*
-			State s = new State(state, pathToState);
-			s.pathToState = this.pathToState;
-
-			//System.out.println(state + ":\t" + pathToState);
-
-			return s;
-			 */
-			return new State(s.state, (LinkedList<String>) s.pathToState.clone());
+			return new State(s.state, (LinkedList<String>) s.pathToState.clone(), (LinkedList<Direction>) s.directionsToState.clone());
 		}
 
 		public boolean move(Direction direction)
@@ -61,19 +54,19 @@ public class EightPuzzle
 
 			// Swap left
 			if (direction.equals(Direction.left))
-				swap(blankIndex, blankIndex - 1);
+				swap(blankIndex, blankIndex - 1, Direction.left);
 
 				// Swap right
 			else if (direction.equals(Direction.right))
-				swap(blankIndex, blankIndex + 1);
+				swap(blankIndex, blankIndex + 1, Direction.right);
 
 				// Swap up
 			else if (direction.equals(Direction.up))
-				swap(blankIndex, blankIndex - 4);
+				swap(blankIndex, blankIndex - 4, Direction.up);
 
 				// Swap down
 			else
-				swap(blankIndex, blankIndex + 4);
+				swap(blankIndex, blankIndex + 4, Direction.down);
 
 			return true;
 		}
@@ -96,8 +89,10 @@ public class EightPuzzle
 			return !direction.equals(Direction.down) || blankIndex <= 7;
 		}
 
-		private void swap(int blankIndex, int newBlankIndex)
+		private void swap(int blankIndex, int newBlankIndex, Direction direction)
 		{
+			directionsToState.add(direction);
+
 			// swap
 			char[] stateArray = state.toCharArray();
 			stateArray[blankIndex] = stateArray[newBlankIndex];
@@ -196,43 +191,6 @@ public class EightPuzzle
 		return true;
 	}
 
-	private State getMove(State state, Direction direction)
-	{
-		// where blank is at in puzzle
-		int blankIndex = state.state.indexOf('b');
-
-		// Unable to move left
-		if (direction.equals(Direction.left) && blankIndex % 4 == 0)
-			return null;
-		// Unable to move right
-		if (direction.equals(Direction.right) && blankIndex % 4 == 2)
-			return null;
-		// Unable to move up
-		if (direction.equals(Direction.up) && blankIndex < 3)
-			return null;
-		// Unable to move down
-		if (direction.equals(Direction.down) && blankIndex > 7)
-			return null;
-
-		// Swap left
-		if (direction.equals(Direction.left))
-			stateSwap(state, blankIndex, blankIndex - 1);
-
-			// Swap right
-		else if (direction.equals(Direction.right))
-			stateSwap(state, blankIndex, blankIndex + 1);
-
-			// Swap up
-		else if (direction.equals(Direction.up))
-			stateSwap(state, blankIndex, blankIndex - 4);
-
-			// Swap down
-		else
-			stateSwap(state, blankIndex, blankIndex + 4);
-
-		return state;
-	}
-
 	/**
 	 * Helper method that preforms swapping function for move method
 	 *
@@ -282,12 +240,36 @@ public class EightPuzzle
 			Direction nextDirection = directions[random.nextInt(4)];
 			//boolean notReturningToPreviousState =
 
-			if (/*lastDirection != nextDirection && */move(nextDirection))
+			if (directionsAreNotOpposites(lastDirection, nextDirection) && move(nextDirection))
 			{
 				n--;
 				lastDirection = nextDirection;
 			}
 		}
+	}
+
+	/**
+	 * Helper method for randomizeState method that makes sure that the next random direction does not undo the prior random direction
+	 *
+	 * @param a last direction
+	 * @param b next direction
+	 * @return true if a != the opposite of b or when a is null
+	 */
+	private boolean directionsAreNotOpposites(Direction a, Direction b)
+	{
+		if (a == null)
+			return true;
+
+		if (a.equals(Direction.left))
+			return !b.equals(Direction.right);
+
+		if (a.equals(Direction.right))
+			return !b.equals(Direction.left);
+
+		if (a.equals(Direction.up))
+			return !b.equals(Direction.down);
+
+		return !b.equals(Direction.up);
 	}
 
 	public void solveAStar()
@@ -371,9 +353,7 @@ public class EightPuzzle
 		}
 	}
 	*/
-	// TODO: Error is that method will print out all states checked instead of
-	// just printing out the states necessary to get to the solved state
-	public void BFS()
+	public void BFS() throws Exception
 	{
 		// list of already encountered states
 		HashSet<State> encountered = new HashSet<>();
@@ -391,121 +371,65 @@ public class EightPuzzle
 			// remove 1st element from queue to test
 			State currentState = queue.poll();
 
-			// If element to test is the goal state
-			if (currentState.state.equals(goalState))
-			{
-				System.out.println(currentState.state + " = " + goalState);
-				System.out.println("Success!");
-				System.out.println("Path is:");
-				for (String s : currentState.pathToState)
-					System.out.println(s);
-				System.out.println(currentState.state);
-				setState(goalState);
-				return;
-			}
-
 			// If element has not already been checked
 			if (!encountered.contains(currentState))
 			{
+				// If element to test is the goal state
+				if (currentState.state.equals(goalState))
+				{
+					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+
+					for (Direction d : currentState.directionsToState)
+						System.out.println(d);
+
+					setState(goalState);
+					return;
+				}
+
 				nodesCounted++;
+
+				// Set the current state as encountered
 				encountered.add(currentState);
 
-				//System.out.println(currentState.state + ":\t" + currentState.pathToState);
-				System.out.println(currentState.state);
-
-				// TODO:
-				// Objects should be cloned
-				// Not all states should be printed out
-
 				// left
-				State left = currentState.clone(currentState);
+				State left = State.clone(currentState);
 				if (left.canMove(Direction.left))
 				{
 					left.pathToState.add(currentState.state);
 					left.move(Direction.left);
-					System.out.println("Left:\t" + left.state + ":\t" + left.pathToState);
 					queue.add(left);
 				}
 
 				// right
-				State right = currentState.clone(currentState);
+				State right = State.clone(currentState);
 				if (right.canMove(Direction.right))
 				{
 					right.pathToState.add(currentState.state);
 					right.move(Direction.right);
-					System.out.println("Right:\t" + right.state + ":\t" + right.pathToState);
 					queue.add(right);
 				}
 
 				// up
-				State up = currentState.clone(currentState);
+				State up = State.clone(currentState);
 				if (up.canMove(Direction.up))
 				{
 					up.pathToState.add(currentState.state);
 					up.move(Direction.up);
-					System.out.println("Up:\t" + up.state + ":\t" + up.pathToState);
 					queue.add(up);
 				}
 
 				// down
-				State down = currentState.clone(currentState);
+				State down = State.clone(currentState);
 				if (down.canMove(Direction.down))
 				{
 					down.pathToState.add(currentState.state);
 					down.move(Direction.down);
-					System.out.println("Down:\t" + down.state + ":\t" + down.pathToState);
 					queue.add(down);
 				}
-
-				/*
-				State left = currentState.clone();
-				if (left.move(Direction.left))
-					queue.add(left);
-
-				State right = currentState.clone();
-				if (right.move(Direction.right))
-					queue.add(right);
-
-				State up = currentState.clone();
-				if (up.move(Direction.up))
-					queue.add(up);
-
-				State down = currentState.clone();
-				if (down.move(Direction.down))
-					queue.add(down);
-
-				//System.out.println(currentState.state + ":\t" + left.state + "\t\t" + right.state + "\t\t" + up.state + "\t\t" + down.state);
-
-				/*
-				// Add left if possible
-				State l = getMove(currentState.clone(), Direction.left);
-				State r = getMove(currentState.clone(), Direction.right);
-				State u = getMove(currentState.clone(), Direction.up);
-				State d = getMove(currentState.clone(), Direction.down);
-
-				// Add left if possible
-				if (l != null)
-					queue.offer(new State(l.state, currentState));
-
-				// Add right if possible
-				//State r = getMove(currentState.clone(), Direction.right);
-				if (r != null)
-					queue.offer(new State(r.state, currentState));
-
-				// Add up if possible
-				//State u = getMove(currentState.clone(), Direction.up);
-				if (u != null)
-					queue.offer(new State(u.state, currentState));
-
-				// Add down if possible
-				//State d = getMove(currentState.clone(), Direction.down);
-				if (d != null)
-					queue.offer(new State(d.state, currentState));
-				 */
 			}
 		}
 
-		// Error
+		throw new Exception("The number of nodes searched has exceeded the maximum number that can be searched by this program");
 	}
 
 	/**
@@ -524,15 +448,21 @@ public class EightPuzzle
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 
-		//puzzle.randomizeState(10);
+		puzzle.randomizeState(10);
 
-		puzzle.setState("12b 345 678");
+		//puzzle.setState("12b 345 678");
 
 		//puzzle.printState();
 
 		//puzzle.solveBeam();
 
-		puzzle.BFS();
+		try
+		{
+			puzzle.BFS();
+		} catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
 
 		//puzzle.printState();
 	}
