@@ -3,25 +3,42 @@ import java.util.*;
 
 public class EightPuzzle
 {
+	// State of current puzzle
 	private String state;
+	// The state that is the solved position
 	private final String goalState = "b12 345 678";
+	// Number of nodes that can be searched
 	private int maxNodes = Integer.MAX_VALUE;
 
+	/**
+	 * This class represents a state of the 8-puzzle. A state contains the state of the puzzle and the paths and
+	 * directions to get to this state from the scrambled position when one of the search methods is called from
+	 * the EightPuzzle class
+	 */
 	static class State
 	{
+		// Current state of this state
 		private String state;
+		// Path to get to this state from initial scrambled position
 		private final LinkedList<String> pathToState;
-
+		// Directions to get to the current state from the initial scrambled position
 		private final LinkedList<Direction> directionsToState;
 
+		/**
+		 * @param state
+		 */
 		public State(String state)
 		{
 			this.state = state;
 			pathToState = new LinkedList<>();
 			directionsToState = new LinkedList<>();
-			//pathToState.add(state);
 		}
 
+		/**
+		 * @param state
+		 * @param pathToState
+		 * @param directions
+		 */
 		public State(String state, LinkedList<String> pathToState, LinkedList<Direction> directions)
 		{
 			this.state = state;
@@ -29,11 +46,20 @@ public class EightPuzzle
 			directionsToState = directions;
 		}
 
+		/**
+		 * @param s state to duplicate
+		 * @return a duplicate copy of the parameter s
+		 */
 		public static State clone(State s)
 		{
 			return new State(s.state, (LinkedList<String>) s.pathToState.clone(), (LinkedList<Direction>) s.directionsToState.clone());
 		}
 
+		/**
+		 * @param direction Moves the blank tile in the puzzle in the direction of this parameter of either 'left',
+		 *                  'right', 'up', or 'down'
+		 * @return true if the move is successful or false if it cannot be moved in that direction
+		 */
 		public boolean move(Direction direction)
 		{
 			// where blank is at in puzzle
@@ -71,6 +97,10 @@ public class EightPuzzle
 			return true;
 		}
 
+		/**
+		 * @param direction direction to move blank tile in
+		 * @return true if the puzzle can move in the direction specified, false otherwise
+		 */
 		private boolean canMove(Direction direction)
 		{
 			// where blank is at in puzzle
@@ -89,6 +119,13 @@ public class EightPuzzle
 			return !direction.equals(Direction.down) || blankIndex <= 7;
 		}
 
+		/**
+		 * Helper method that preforms swapping function for move method
+		 *
+		 * @param blankIndex    index where the blank tile is at
+		 * @param newBlankIndex index where blank index is going to be
+		 * @param direction     direction to get to current the next state
+		 */
 		private void swap(int blankIndex, int newBlankIndex, Direction direction)
 		{
 			directionsToState.add(direction);
@@ -114,6 +151,11 @@ public class EightPuzzle
 		}
 	}
 
+	/**
+	 * Reads the state from the file specified and constructs a new EightPuzzle
+	 *
+	 * @param file file to read
+	 */
 	public EightPuzzle(String file)
 	{
 		try
@@ -137,23 +179,27 @@ public class EightPuzzle
 		state = newState;
 	}
 
+	/**
+	 * Print the current puzzle state
+	 */
 	public void printState()
 	{
 		System.out.println(state);
 	}
 
-	//TODO: Remove when done
-	@Override
-	public String toString()
-	{
-		return state.replaceAll(" ", "\n");
-	}
-
+	/**
+	 * Direction of 'left', 'right', 'up', or 'down' to move blank tile towards
+	 */
 	public enum Direction
 	{
 		up, down, left, right
 	}
 
+	/**
+	 * @param direction Moves the blank tile in the puzzle in the direction of this parameter of either 'left',
+	 *                  'right', 'up', or 'down'
+	 * @return true if the move is successful or false if it cannot be moved in that direction
+	 */
 	public boolean move(Direction direction)
 	{
 		// where blank is at in puzzle
@@ -211,21 +257,12 @@ public class EightPuzzle
 		state = stringBuilder.substring(0, 11);
 	}
 
-	private void stateSwap(State state, int blankIndex, int newBlankIndex)
-	{
-		// swap
-		char[] stateArray = state.state.toCharArray();
-		stateArray[blankIndex] = stateArray[newBlankIndex];
-		stateArray[newBlankIndex] = 'b';
-
-		// convert array to String
-		StringBuilder stringBuilder = new StringBuilder();
-		for (char c : stateArray)
-			stringBuilder.append(c);
-		state.state = stringBuilder.substring(0, 11);
-	}
-
-	//TODO: Find a way to make sure random state cannot undo the prior move
+	/**
+	 * Make n random moves from the goal state.  Note that the goal state is not reachable from all
+	 * puzzle states, so this method of randomizing the puzzle ensures that a solu8on exists.
+	 *
+	 * @param n makes n random moves from the goal state
+	 */
 	public void randomizeState(int n)
 	{
 		// resets state
@@ -274,20 +311,7 @@ public class EightPuzzle
 
 	public void solveAStar()
 	{
-		// Initialize Open List
-		List<State> openList = new ArrayList<>(); // TODO: maybe change type of list
 
-		// Initialize Closed List and put starting node on open list
-		List<State> closedList = new ArrayList<>(); // TODO: maybe change type of list
-
-		// put starting node at 0
-		openList.add(new State(state));
-
-		// while Open List is not empty
-		while (!openList.isEmpty())
-		{
-			// Find the node with the least f on the open list, call it q
-		}
 	}
 
 	/*
@@ -429,7 +453,7 @@ public class EightPuzzle
 			}
 		}
 
-		throw new Exception("The number of nodes searched has exceeded the maximum number that can be searched by this program");
+		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
 	}
 
 	/**
