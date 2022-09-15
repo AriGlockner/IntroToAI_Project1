@@ -15,7 +15,7 @@ public class EightPuzzle
 	 * directions to get to this state from the scrambled position when one of the search methods is called from
 	 * the EightPuzzle class
 	 */
-	static class State
+	static class State implements Comparable<State>
 	{
 		// Current state of this state
 		private String state;
@@ -23,6 +23,7 @@ public class EightPuzzle
 		private final LinkedList<String> pathToState;
 		// Directions to get to the current state from the initial scrambled position
 		private final LinkedList<Direction> directionsToState;
+		private int distanceToSolved;
 
 		/**
 		 * @param state
@@ -32,6 +33,7 @@ public class EightPuzzle
 			this.state = state;
 			pathToState = new LinkedList<>();
 			directionsToState = new LinkedList<>();
+			calculateAndSetDistanceToSolved();
 		}
 
 		/**
@@ -44,6 +46,17 @@ public class EightPuzzle
 			this.state = state;
 			this.pathToState = pathToState;
 			directionsToState = directions;
+			calculateAndSetDistanceToSolved();
+		}
+
+		/**
+		 * Calculates and sets the distance to solved variable which is equal to the sum of the displacement of every
+		 * tile. This is used in the compareTo method in this class which is used for the beam search method in the
+		 * EightPuzzle class
+		 */
+		private void calculateAndSetDistanceToSolved()
+		{
+			distanceToSolved = 0; // TODO: Calculate
 		}
 
 		/**
@@ -148,6 +161,19 @@ public class EightPuzzle
 			if (o instanceof State)
 				return state.equals(((State) o).state);
 			return false;
+		}
+
+		// TODO: Solve distance to solved in constructors
+		/**
+		 * @param o the State to be compared.
+		 * @return this state's sum of the number of moves for each tile to move to its goal state if the other tiles
+		 * don't exist minus the other state's sum of the number of moves for each tile to move to its goal state if
+		 * the other tiles don't exist
+		 */
+		@Override
+		public int compareTo(State o)
+		{
+			return distanceToSolved - o.distanceToSolved;
 		}
 	}
 
@@ -384,6 +410,93 @@ public class EightPuzzle
 
 		// Queue
 		Queue<State> queue = new LinkedList<>();
+		queue.add(new State(state));
+
+		// make sure program does not check too many states
+		int nodesCounted = 0;
+
+
+		while (queue.size() > 0 && nodesCounted < maxNodes)
+		{
+			// remove 1st element from queue to test
+			State currentState = queue.poll();
+
+			// If element has not already been checked
+			if (!encountered.contains(currentState))
+			{
+				// If element to test is the goal state
+				if (currentState.state.equals(goalState))
+				{
+					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+
+					for (Direction d : currentState.directionsToState)
+						System.out.println(d);
+
+					setState(goalState);
+					return;
+				}
+
+				nodesCounted++;
+
+				// Set the current state as encountered
+				encountered.add(currentState);
+
+				// left
+				State left = State.clone(currentState);
+				if (left.canMove(Direction.left))
+				{
+					left.pathToState.add(currentState.state);
+					left.move(Direction.left);
+					queue.add(left);
+				}
+
+				// right
+				State right = State.clone(currentState);
+				if (right.canMove(Direction.right))
+				{
+					right.pathToState.add(currentState.state);
+					right.move(Direction.right);
+					queue.add(right);
+				}
+
+				// up
+				State up = State.clone(currentState);
+				if (up.canMove(Direction.up))
+				{
+					up.pathToState.add(currentState.state);
+					up.move(Direction.up);
+					queue.add(up);
+				}
+
+				// down
+				State down = State.clone(currentState);
+				if (down.canMove(Direction.down))
+				{
+					down.pathToState.add(currentState.state);
+					down.move(Direction.down);
+					queue.add(down);
+				}
+			}
+		}
+
+		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+	}
+
+	/**
+	 * Solve the puzzle from its current state by adapting local beam search with k states.  You will
+	 * need to define an evaluation function which you should describe in your writeup.  It should
+	 * have a  minimum of zero at the goal state. When the goal is found, your code
+	 * should print the number of tile moves needed to obtain the solution followed by the solution as
+	 * a sequences of moves (up, down, leI, or right) from the starting state to the goal state.
+	 */
+	public void solveBeam() throws Exception
+	{
+		// TODO: Solve like BFS, but use a heap and a comparable
+		// list of already encountered states
+		HashSet<State> encountered = new HashSet<>();
+
+		// Create Heap and add initial state to heap
+		PriorityQueue<State> queue = new PriorityQueue<>();
 		queue.add(new State(state));
 
 		// make sure program does not check too many states
