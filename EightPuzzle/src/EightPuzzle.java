@@ -15,7 +15,7 @@ public class EightPuzzle
 	 * directions to get to this state from the scrambled position when one of the search methods is called from
 	 * the EightPuzzle class
 	 */
-	static class State implements Comparable<State>
+	static class State
 	{
 		// Current state of this state
 		private String state;
@@ -170,10 +170,21 @@ public class EightPuzzle
 		 * don't exist minus the other state's sum of the number of moves for each tile to move to its goal state if
 		 * the other tiles don't exist
 		 */
-		@Override
-		public int compareTo(State o)
+
+		public int compareToBeam(State o)
 		{
-			return distanceToSolved - o.distanceToSolved;
+			return o.distanceToSolved - distanceToSolved;
+		}
+
+		/**
+		 * @param o the State to be compared.
+		 * @return this state's sum of the number of moves for each tile to move to its goal state if the other tiles
+		 * don't exist plus the number of moves to get to this state minus the other state's sum of the number of moves for each tile to move to its goal state if
+		 * the other tiles don't exist plus the number of moves to get to the other state
+		 */
+		public int compareToAStar(State o)
+		{
+			return (o.distanceToSolved + o.pathToState.size()) - (distanceToSolved + pathToState.size());
 		}
 	}
 
@@ -496,7 +507,7 @@ public class EightPuzzle
 		HashSet<State> encountered = new HashSet<>();
 
 		// Create Heap and add initial state to heap
-		PriorityQueue<State> queue = new PriorityQueue<>();
+		PriorityQueue<State> queue = new PriorityQueue<>(State::compareToBeam);
 		queue.add(new State(state));
 
 		// make sure program does not check too many states
