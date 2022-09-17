@@ -24,6 +24,8 @@ public class EightPuzzle
 		// Directions to get to the current state from the initial scrambled position
 		private final LinkedList<Direction> directionsToState;
 		private int distanceToSolved;
+		//  = cost to reach current node + estimated cost to reach goal node
+		private int aStarWeight;
 
 		/**
 		 * @param state
@@ -56,7 +58,9 @@ public class EightPuzzle
 		 */
 		private void calculateAndSetDistanceToSolved()
 		{
-			distanceToSolved = 0; // TODO: Calculate
+			//
+			distanceToSolved = 0; // TODO: Calculate the number of slides in an unrestricted fashion
+			aStarWeight = directionsToState.size() + distanceToSolved;
 		}
 
 		/**
@@ -170,13 +174,14 @@ public class EightPuzzle
 		 * don't exist minus the other state's sum of the number of moves for each tile to move to its goal state if
 		 * the other tiles don't exist
 		 */
-
 		public int compareToBeam(State o)
 		{
 			return o.distanceToSolved - distanceToSolved;
 		}
 
 		/**
+		 * f(n) = g(n) + h(n)
+		 *
 		 * @param o the State to be compared.
 		 * @return this state's sum of the number of moves for each tile to move to its goal state if the other tiles
 		 * don't exist plus the number of moves to get to this state minus the other state's sum of the number of moves for each tile to move to its goal state if
@@ -184,7 +189,7 @@ public class EightPuzzle
 		 */
 		public int compareToAStar(State o)
 		{
-			return (o.distanceToSolved + o.pathToState.size()) - (distanceToSolved + pathToState.size());
+			return o.aStarWeight - aStarWeight;
 		}
 	}
 
@@ -346,9 +351,82 @@ public class EightPuzzle
 		return !b.equals(Direction.up);
 	}
 
-	public void solveAStar()
+	public void solveAStar() throws Exception
 	{
+		// list of already encountered states
+		HashSet<State> encountered = new HashSet<>();
 
+		// Heap for determining best choice
+		PriorityQueue<State> heap = new PriorityQueue<>(State::compareToAStar);
+		heap.add(new State(state));
+
+		// make sure program does not check too many states
+		int nodesCounted = 0;
+
+		while (heap.size() > 0 && nodesCounted < maxNodes)
+		{
+			// remove 1st element from queue to test
+			State currentState = heap.poll();
+
+			// If element has not already been checked
+			if (!encountered.contains(currentState))
+			{
+				// If element to test is the goal state
+				if (currentState.state.equals(goalState))
+				{
+					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+
+					for (Direction d : currentState.directionsToState)
+						System.out.println(d);
+
+					setState(goalState);
+					return;
+				}
+
+				nodesCounted++;
+
+				// Set the current state as encountered
+				encountered.add(currentState);
+
+				// left
+				State left = State.clone(currentState);
+				if (left.canMove(Direction.left))
+				{
+					left.pathToState.add(currentState.state);
+					left.move(Direction.left);
+					heap.add(left);
+				}
+
+				// right
+				State right = State.clone(currentState);
+				if (right.canMove(Direction.right))
+				{
+					right.pathToState.add(currentState.state);
+					right.move(Direction.right);
+					heap.add(right);
+				}
+
+				// up
+				State up = State.clone(currentState);
+				if (up.canMove(Direction.up))
+				{
+					up.pathToState.add(currentState.state);
+					up.move(Direction.up);
+					heap.add(up);
+				}
+
+				// down
+				State down = State.clone(currentState);
+				if (down.canMove(Direction.down))
+				{
+					down.pathToState.add(currentState.state);
+					down.move(Direction.down);
+					heap.add(down);
+				}
+			}
+		}
+
+		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
 	}
 
 	/*
@@ -596,7 +674,7 @@ public class EightPuzzle
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 
-		puzzle.randomizeState(10);
+		puzzle.randomizeState(15);
 
 		//puzzle.setState("12b 345 678");
 
@@ -604,9 +682,13 @@ public class EightPuzzle
 
 		//puzzle.solveBeam();
 
+		System.out.println("Shuffled:");
+		puzzle.printState();
+
 		try
 		{
-			puzzle.BFS();
+			//puzzle.BFS();
+			puzzle.solveAStar();
 		} catch (Exception e)
 		{
 			throw new RuntimeException(e);
