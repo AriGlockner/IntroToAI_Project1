@@ -6,7 +6,7 @@ public class EightPuzzle
 	// State of current puzzle
 	private String state;
 	// The state that is the solved position
-	private final String goalState = "b12 345 678";
+	private final static String goalState = "b12 345 678";
 	// Number of nodes that can be searched
 	private int maxNodes = Integer.MAX_VALUE;
 
@@ -60,6 +60,27 @@ public class EightPuzzle
 		{
 			//
 			distanceToSolved = 0; // TODO: Calculate the number of slides in an unrestricted fashion
+
+			for (int i = 0; i < 11; i++)
+			{
+				char character = state.charAt(i);
+				if (character != ' ')
+				{
+					int characterGoalLocation = EightPuzzle.goalState.indexOf(character);
+
+					if (i != characterGoalLocation)
+					{
+						// heuristics:
+						// TODO
+						// Distance moved in left/right direction
+						distanceToSolved += Math.abs((i % 4) - (characterGoalLocation % 4));
+
+						// Distance moved in up/down direction
+						distanceToSolved += Math.abs((i / 4) - (characterGoalLocation / 4));
+					}
+				}
+			}
+
 			aStarWeight = directionsToState.size() + distanceToSolved;
 		}
 
