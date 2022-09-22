@@ -28,7 +28,7 @@ public class EightPuzzle
 		private int aStarWeight;
 
 		/**
-		 * @param state
+		 * @param state current state of puzzle
 		 */
 		public State(String state)
 		{
@@ -39,9 +39,9 @@ public class EightPuzzle
 		}
 
 		/**
-		 * @param state
-		 * @param pathToState
-		 * @param directions
+		 * @param state       current state of puzzle
+		 * @param pathToState path to get to the current state of the puzzle
+		 * @param directions  directions to get to the current state of the puzzle
 		 */
 		public State(String state, LinkedList<String> pathToState, LinkedList<Direction> directions)
 		{
@@ -58,8 +58,8 @@ public class EightPuzzle
 		 */
 		private void calculateAndSetDistanceToSolved()
 		{
-			//
-			distanceToSolved = 0; // TODO: Calculate the number of slides in an unrestricted fashion
+			// number of tiles to be moved to get to solved position if each tile ignored other tiles in its path
+			distanceToSolved = 0;
 
 			for (int i = 0; i < 11; i++)
 			{
@@ -70,7 +70,6 @@ public class EightPuzzle
 
 					if (i != characterGoalLocation)
 					{
-						// TODO: heuristics:
 						// Distance moved in left/right direction
 						distanceToSolved += Math.abs((i % 4) - (characterGoalLocation % 4));
 
@@ -187,8 +186,6 @@ public class EightPuzzle
 			return false;
 		}
 
-		// TODO: Solve distance to solved in constructors
-
 		/**
 		 * @param o the State to be compared.
 		 * @return this state's sum of the number of moves for each tile to move to its goal state if the other tiles
@@ -197,7 +194,7 @@ public class EightPuzzle
 		 */
 		public int compareToBeam(State o)
 		{
-			return o.distanceToSolved - distanceToSolved;
+			return distanceToSolved - o.distanceToSolved;
 		}
 
 		/**
@@ -648,82 +645,85 @@ public class EightPuzzle
 	 */
 	public void solveBeam() throws Exception
 	{
-		// TODO: Solve like BFS, but use a heap and a comparable
-		// list of already encountered states
+		// 1) Keep track of k states
+		// 2) Generate successors for all k states
+		// 3) Keep k best states
+		// 4) Repeat
+
+		// Keep track of k states
+		State[] states = new State[2];
+		states[0] = new State(state);
+
+		// Already encountered states
 		HashSet<State> encountered = new HashSet<>();
+		encountered.add(states[0]);
 
-		// Create Heap and add initial state to heap
-		PriorityQueue<State> queue = new PriorityQueue<>(State::compareToBeam);
-		queue.add(new State(state));
-
-		// make sure program does not check too many states
+		//
 		int nodesCounted = 0;
 
-
-		while (queue.size() > 0 && nodesCounted < maxNodes)
+		while (nodesCounted < maxNodes)
 		{
-			// remove 1st element from queue to test
-			State currentState = queue.poll();
+			// TODO: Add check for goal state
 
-			// If element has not already been checked
-			if (!encountered.contains(currentState))
-			{
-				// If element to test is the goal state
-				if (currentState.state.equals(goalState))
+			// Create list of successors
+			PriorityQueue<State> successors = new PriorityQueue<>(State::compareToBeam);
+
+			// Add all possible successors to the successors list
+			for (State s : states)
+				if (!encountered.contains(s))
 				{
-					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
-
-					for (Direction d : currentState.directionsToState)
-						System.out.println(d);
-
-					setState(goalState);
-					return;
+					addSuccessors(s, successors);
+					nodesCounted++;
 				}
 
-				nodesCounted++;
-
-				// Set the current state as encountered
-				encountered.add(currentState);
-
-				// left
-				State left = State.clone(currentState);
-				if (left.canMove(Direction.left))
-				{
-					left.pathToState.add(currentState.state);
-					left.move(Direction.left);
-					queue.add(left);
-				}
-
-				// right
-				State right = State.clone(currentState);
-				if (right.canMove(Direction.right))
-				{
-					right.pathToState.add(currentState.state);
-					right.move(Direction.right);
-					queue.add(right);
-				}
-
-				// up
-				State up = State.clone(currentState);
-				if (up.canMove(Direction.up))
-				{
-					up.pathToState.add(currentState.state);
-					up.move(Direction.up);
-					queue.add(up);
-				}
-
-				// down
-				State down = State.clone(currentState);
-				if (down.canMove(Direction.down))
-				{
-					down.pathToState.add(currentState.state);
-					down.move(Direction.down);
-					queue.add(down);
-				}
-			}
+			// fill up states with up to the kth best successors
+			for (int i = 0; i < states.length; i++)
+				if (!successors.isEmpty())
+					states[i] = successors.poll();
+				else
+					break;
 		}
 
-		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+		//throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+	}
+
+	private void addSuccessors(State currentState, PriorityQueue<State> successors)
+	{
+		// left
+		State left = State.clone(currentState);
+		if (left.canMove(Direction.left))
+		{
+			left.pathToState.add(currentState.state);
+			left.move(Direction.left);
+			successors.add(left);
+		}
+
+		// right
+		State right = State.clone(currentState);
+		if (right.canMove(Direction.right))
+		{
+			right.pathToState.add(currentState.state);
+			right.move(Direction.right);
+			successors.add(right);
+		}
+
+		// up
+		State up = State.clone(currentState);
+		if (up.canMove(Direction.up))
+		{
+			up.pathToState.add(currentState.state);
+			up.move(Direction.up);
+			successors.add(up);
+		}
+
+		// down
+		State down = State.clone(currentState);
+		if (down.canMove(Direction.down))
+		{
+			down.pathToState.add(currentState.state);
+			down.move(Direction.down);
+			successors.add(down);
+		}
 	}
 
 	/**
