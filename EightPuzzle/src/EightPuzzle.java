@@ -70,8 +70,7 @@ public class EightPuzzle
 
 					if (i != characterGoalLocation)
 					{
-						// heuristics:
-						// TODO
+						// TODO: heuristics:
 						// Distance moved in left/right direction
 						distanceToSolved += Math.abs((i % 4) - (characterGoalLocation % 4));
 
@@ -189,6 +188,7 @@ public class EightPuzzle
 		}
 
 		// TODO: Solve distance to solved in constructors
+
 		/**
 		 * @param o the State to be compared.
 		 * @return this state's sum of the number of moves for each tile to move to its goal state if the other tiles
@@ -210,7 +210,7 @@ public class EightPuzzle
 		 */
 		public int compareToAStar(State o)
 		{
-			return o.aStarWeight - aStarWeight;
+			return aStarWeight - o.aStarWeight;
 		}
 	}
 
@@ -372,6 +372,11 @@ public class EightPuzzle
 		return !b.equals(Direction.up);
 	}
 
+	/**
+	 * Solves the 8-puzzle using an A* algorithm
+	 *
+	 * @throws Exception if there is no such solution or if the number of moves exceeds the number of moves allowed to search
+	 */
 	public void solveAStar() throws Exception
 	{
 		// list of already encountered states
@@ -384,6 +389,9 @@ public class EightPuzzle
 		// make sure program does not check too many states
 		int nodesCounted = 0;
 
+		//
+		State bestState = null;
+
 		while (heap.size() > 0 && nodesCounted < maxNodes)
 		{
 			// remove 1st element from queue to test
@@ -395,60 +403,99 @@ public class EightPuzzle
 				// If element to test is the goal state
 				if (currentState.state.equals(goalState))
 				{
-					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
-
-					for (Direction d : currentState.directionsToState)
-						System.out.println(d);
-
-					setState(goalState);
-					return;
+					bestState = currentState;
+					break;
 				}
 
 				nodesCounted++;
 
-				// Set the current state as encountered
-				encountered.add(currentState);
-
-				// left
-				State left = State.clone(currentState);
-				if (left.canMove(Direction.left))
-				{
-					left.pathToState.add(currentState.state);
-					left.move(Direction.left);
-					heap.add(left);
-				}
-
-				// right
-				State right = State.clone(currentState);
-				if (right.canMove(Direction.right))
-				{
-					right.pathToState.add(currentState.state);
-					right.move(Direction.right);
-					heap.add(right);
-				}
-
-				// up
-				State up = State.clone(currentState);
-				if (up.canMove(Direction.up))
-				{
-					up.pathToState.add(currentState.state);
-					up.move(Direction.up);
-					heap.add(up);
-				}
-
-				// down
-				State down = State.clone(currentState);
-				if (down.canMove(Direction.down))
-				{
-					down.pathToState.add(currentState.state);
-					down.move(Direction.down);
-					heap.add(down);
-				}
+				// set the current state as encountered and add its directions it can move to into the heap
+				aStarAddPaths(currentState, encountered, heap);
 			}
 		}
 
-		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+		// No such path to goal state
+		if (bestState == null)
+			throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+
+		//
+		while (heap.size() > 0 && nodesCounted < maxNodes)
+		{
+			State currentState = heap.poll();
+
+			// no faster paths can be reached
+			if (currentState.pathToState.size() >= bestState.pathToState.size())
+			{
+				System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+
+				for (Direction d : currentState.directionsToState)
+					System.out.println(d);
+
+				return;
+			}
+
+			// current state is goal state
+			if (currentState.state.equals(goalState))
+			{
+				bestState = currentState;
+				encountered.add(currentState);
+			}
+
+			// Add other possible outcomes to heap if it has the possibility of being faster than the current best route
+			else if (currentState.compareToAStar(bestState) < 0)
+				aStarAddPaths(currentState, encountered, heap);
+		}
 	}
+
+	/**
+	 * Helper method for solveAStar that sets the current state as encountered and adds possible moves to the heap
+	 *
+	 * @param currentState current state of puzzle algorithm is searching
+	 * @param encountered  list of states that have already been checked
+	 * @param heap         next states to check
+	 */
+	private void aStarAddPaths(State currentState, HashSet<State> encountered, PriorityQueue<State> heap)
+	{
+		// Set the current state as encountered
+		encountered.add(currentState);
+
+		// left
+		State left = State.clone(currentState);
+		if (left.canMove(Direction.left))
+		{
+			left.pathToState.add(currentState.state);
+			left.move(Direction.left);
+			heap.add(left);
+		}
+
+		// right
+		State right = State.clone(currentState);
+		if (right.canMove(Direction.right))
+		{
+			right.pathToState.add(currentState.state);
+			right.move(Direction.right);
+			heap.add(right);
+		}
+
+		// up
+		State up = State.clone(currentState);
+		if (up.canMove(Direction.up))
+		{
+			up.pathToState.add(currentState.state);
+			up.move(Direction.up);
+			heap.add(up);
+		}
+
+		// down
+		State down = State.clone(currentState);
+		if (down.canMove(Direction.down))
+		{
+			down.pathToState.add(currentState.state);
+			down.move(Direction.down);
+			heap.add(down);
+		}
+	}
+
 
 	/*
 	public void solveBeam()
@@ -695,6 +742,21 @@ public class EightPuzzle
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 
+		//puzzle.setState("432 175 6b8");
+
+		//puzzle.setState("142 3b5 678");
+
+		puzzle.randomizeState(100);
+
+		try
+		{
+			puzzle.solveAStar();
+		} catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+
+		/*
 		puzzle.randomizeState(15);
 
 		//puzzle.setState("12b 345 678");
@@ -716,5 +778,15 @@ public class EightPuzzle
 		}
 
 		//puzzle.printState();
+		 */
+
+		/*
+		State state1 = new State("b12 345 678");
+		System.out.println(state1.state + ": " + state1.aStarWeight);
+		State state2 = new State("125 b48 367");
+		System.out.println(state2.state + ": " + state2.aStarWeight);
+		State state3 = new State("432 175 6b8");
+		System.out.println(state3.state + ": " + state3.aStarWeight);
+		 */
 	}
 }
