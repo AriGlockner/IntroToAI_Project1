@@ -645,85 +645,94 @@ public class EightPuzzle
 	 */
 	public void solveBeam() throws Exception
 	{
-		// 1) Keep track of k states
-		// 2) Generate successors for all k states
-		// 3) Keep k best states
-		// 4) Repeat
+		// Number of nodes counted
+		int numNodesCounted = 0;
 
 		// Keep track of k states
-		State[] states = new State[2];
+		int k = 10; // TODO: replace 2 with another k
+		State[] states = new State[k];
 		states[0] = new State(state);
 
-		// Already encountered states
-		HashSet<State> encountered = new HashSet<>();
-		encountered.add(states[0]);
-
-		//
-		int nodesCounted = 0;
-
-		while (nodesCounted < maxNodes)
+		// Repeat keeping track of k states, generating successors for all k states, and keeping the k best states until
+		// either solved or until the program has run more times than it is alloted to
+		while (numNodesCounted < maxNodes)
 		{
-			// TODO: Add check for goal state
-
-			// Create list of successors
+			// Heap to decide the k-best successors for all k states
 			PriorityQueue<State> successors = new PriorityQueue<>(State::compareToBeam);
 
-			// Add all possible successors to the successors list
+			// Add all possible successors to the successors heap except the last returning to the prior state
 			for (State s : states)
-				if (!encountered.contains(s))
+			{
+				if (s != null)
 				{
-					addSuccessors(s, successors);
-					nodesCounted++;
-				}
+					// If the current state is the goal state
+					if (s.state.equals(goalState))
+					{
+						System.out.println("Number of tiles moved: " + s.pathToState.size());
 
-			// fill up states with up to the kth best successors
-			for (int i = 0; i < states.length; i++)
-				if (!successors.isEmpty())
-					states[i] = successors.poll();
-				else
-					break;
+						for (Direction d : s.directionsToState)
+							System.out.println(d);
+
+						return;
+					}
+
+					State parent = null;
+					if (s.pathToState.size() > 0)
+						parent = new State(s.pathToState.getLast());
+
+					// left successor
+					State left = State.clone(s);
+					if (left.canMove(Direction.left))
+					{
+						left.pathToState.add(s.state);
+						left.move(Direction.left);
+						// Add successor to heap of successors if this isn't undoing the prior move
+						if (parent == null || !parent.equals(left))
+							successors.add(left);
+					}
+
+					// right successor
+					State right = State.clone(s);
+					if (right.canMove(Direction.right))
+					{
+						right.pathToState.add(s.state);
+						right.move(Direction.right);
+						// Add successor to heap of successors if this isn't undoing the prior move
+						if (parent == null || !parent.equals(right))
+							successors.add(right);
+					}
+
+					// up successor
+					State up = State.clone(s);
+					if (up.canMove(Direction.up))
+					{
+						up.pathToState.add(s.state);
+						up.move(Direction.up);
+						// Add successor to heap of successors if this isn't undoing the prior move
+						if (parent == null || !parent.equals(up))
+							successors.add(up);
+					}
+
+					// down successor
+					State down = State.clone(s);
+					if (down.canMove(Direction.down))
+					{
+						down.pathToState.add(s.state);
+						down.move(Direction.down);
+						// Add successor to heap of successors if this isn't undoing the prior move
+						if (parent == null || !parent.equals(down))
+							successors.add(down);
+					}
+				}
+			}
+
+			// Store the k best states in the array
+			states = new State[k];
+			for (int i = 0; i < k; i++)
+				states[i] = successors.poll();
 		}
 
 		//throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
-	}
-
-	private void addSuccessors(State currentState, PriorityQueue<State> successors)
-	{
-		// left
-		State left = State.clone(currentState);
-		if (left.canMove(Direction.left))
-		{
-			left.pathToState.add(currentState.state);
-			left.move(Direction.left);
-			successors.add(left);
-		}
-
-		// right
-		State right = State.clone(currentState);
-		if (right.canMove(Direction.right))
-		{
-			right.pathToState.add(currentState.state);
-			right.move(Direction.right);
-			successors.add(right);
-		}
-
-		// up
-		State up = State.clone(currentState);
-		if (up.canMove(Direction.up))
-		{
-			up.pathToState.add(currentState.state);
-			up.move(Direction.up);
-			successors.add(up);
-		}
-
-		// down
-		State down = State.clone(currentState);
-		if (down.canMove(Direction.down))
-		{
-			down.pathToState.add(currentState.state);
-			down.move(Direction.down);
-			successors.add(down);
-		}
 	}
 
 	/**
@@ -746,11 +755,11 @@ public class EightPuzzle
 
 		//puzzle.setState("142 3b5 678");
 
-		puzzle.randomizeState(100);
+		puzzle.randomizeState(10);
 
 		try
 		{
-			puzzle.solveAStar();
+			puzzle.solveBeam();
 		} catch (Exception e)
 		{
 			throw new RuntimeException(e);
