@@ -218,6 +218,7 @@ public class EightPuzzle
 	 */
 	public EightPuzzle(String file)
 	{
+		state = goalState;
 		try
 		{
 			Scanner scanner = new Scanner(new File(file));
