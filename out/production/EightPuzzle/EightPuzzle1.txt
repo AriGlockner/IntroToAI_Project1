@@ -1,1 +1,28 @@
-312 b45 678
+setState b12 345 678
+move up
+move left
+printState
+setState 1b2 345 678
+move up
+printState
+setState 12b 345 678
+move up
+move right
+printState
+setState 312 b45 678
+move left
+printState
+setState 312 645 b78
+move left
+move down
+printState
+setState 312 645 7b8
+move down
+printState
+setState 312 645 78b
+move right
+move down
+printState
+setState 312 64b 785
+move right
+printState

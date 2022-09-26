@@ -1,5 +1,7 @@
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.*;
 
 public class EightPuzzle
 {
@@ -220,7 +222,40 @@ public class EightPuzzle
 	{
 		try
 		{
-			setState(new Scanner(new File(file)).nextLine().substring(0, 11));
+			Scanner scanner = new Scanner(new File(file));
+
+			Method[] methods = this.getClass().getMethods();
+			//System.out.println(Arrays.toString(methods));
+
+			while (scanner.hasNextLine())
+			{
+				String line = scanner.nextLine();
+				String methodName = line;
+				if (line.contains(" "))
+					methodName = line.substring(0, line.indexOf(' '));
+
+				String methodParameters = line.substring(line.indexOf(' ') + 1);
+
+				switch (methodName)
+				{
+					case "setState":
+						this.getClass().getMethod(methodName, String.class).invoke(this, methodParameters);
+						break;
+					case "printState":
+					case "solveA-star":
+					case "solveBeam":
+						this.getClass().getMethod(methodName).invoke(this);
+						break;
+					case "move":
+						this.getClass().getMethod(methodName, Direction.class).invoke(this, Direction.valueOf(methodParameters));
+						break;
+					case "randomizeState":
+					case "maxNodes":
+						this.getClass().getMethod(methodName, int.class).invoke(this, Integer.parseInt(methodParameters));
+				}
+			}
+
+			setState(goalState);
 
 		} catch (Exception e)
 		{
@@ -751,6 +786,8 @@ public class EightPuzzle
 	{
 		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
 
+
+		/*
 		//puzzle.setState("432 175 6b8");
 
 		//puzzle.setState("142 3b5 678");
