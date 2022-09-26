@@ -1,11 +1,9 @@
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.regex.*;
 
 public class EightPuzzle
 {
-	// State of current puzzle
+	// The current state of this puzzle
 	private String state;
 	// The state that is the solved position
 	private final static String goalState = "b12 345 678";
@@ -224,11 +222,9 @@ public class EightPuzzle
 		{
 			Scanner scanner = new Scanner(new File(file));
 
-			Method[] methods = this.getClass().getMethods();
-			//System.out.println(Arrays.toString(methods));
-
 			while (scanner.hasNextLine())
 			{
+				// Get methods and parameters from input
 				String line = scanner.nextLine();
 				String methodName = line;
 				if (line.contains(" "))
@@ -236,16 +232,18 @@ public class EightPuzzle
 
 				String methodParameters = line.substring(line.indexOf(' ') + 1);
 
+				// Invoke methods
 				switch (methodName)
 				{
 					case "setState":
 						this.getClass().getMethod(methodName, String.class).invoke(this, methodParameters);
 						break;
 					case "printState":
-					case "solveA-star":
 					case "solveBeam":
 						this.getClass().getMethod(methodName).invoke(this);
 						break;
+					case "solveA-star":
+						this.getClass().getMethod("solveAStar").invoke(this);
 					case "move":
 						this.getClass().getMethod(methodName, Direction.class).invoke(this, Direction.valueOf(methodParameters));
 						break;
@@ -254,8 +252,6 @@ public class EightPuzzle
 						this.getClass().getMethod(methodName, int.class).invoke(this, Integer.parseInt(methodParameters));
 				}
 			}
-
-			setState(goalState);
 
 		} catch (Exception e)
 		{
