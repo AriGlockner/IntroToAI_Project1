@@ -8,7 +8,7 @@ public class EightPuzzle
 	// The state that is the solved position
 	private final static String goalState = "b12 345 678";
 	// Number of nodes that can be searched
-	private int maxNodes = Integer.MAX_VALUE;
+	private int maxNodes = 4;
 
 	/**
 	 * This class represents a state of the 8-puzzle. A state contains the state of the puzzle and the paths and
@@ -245,6 +245,7 @@ public class EightPuzzle
 						break;
 					case "solveA-star":
 						this.getClass().getMethod("solveAStar").invoke(this);
+						break;
 					case "move":
 						this.getClass().getMethod(methodName, Direction.class).invoke(this, Direction.valueOf(methodParameters));
 						break;
@@ -459,7 +460,7 @@ public class EightPuzzle
 
 				for (Direction d : currentState.directionsToState)
 					System.out.println(d);
-
+				setState(goalState);
 				return;
 			}
 
@@ -681,7 +682,7 @@ public class EightPuzzle
 		int numNodesCounted = 0;
 
 		// Keep track of k states
-		int k = 10; // TODO: replace 2 with another k
+		int k = (int) maxNodes;
 		State[] states = new State[k];
 		states[0] = new State(state);
 
@@ -704,7 +705,7 @@ public class EightPuzzle
 
 						for (Direction d : s.directionsToState)
 							System.out.println(d);
-
+						setState(goalState);
 						return;
 					}
 
@@ -756,6 +757,8 @@ public class EightPuzzle
 							successors.add(down);
 					}
 				}
+				else
+					break;
 			}
 
 			// Store the k best states in the array

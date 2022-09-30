@@ -1,0 +1,30 @@
+setState b12 345 678
+move left
+move down
+move right
+move up
+move left
+printState
+setState 142 b75 368
+maxNodes 5
+printState
+solveBeam
+printState
+setState 142 b75 368
+maxNodes 21
+solveA-star
+printState
+setState 245 b87 136
+printState
+maxNodes 5
+solveBeam
+printState
+setState 245 b87 136
+printState
+maxNodes 400
+solveA-star
+printState
+randomizeState 25
+printState
+randomizeState 25
+printState
