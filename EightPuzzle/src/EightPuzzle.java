@@ -781,8 +781,8 @@ public class EightPuzzle
 
 	public static void main(String[] args)
 	{
-		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
-
+		//EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
+		EightPuzzle puzzle = new EightPuzzle("EightPuzzleTestFile1.txt");
 
 		/*
 		//puzzle.setState("432 175 6b8");
