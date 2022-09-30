@@ -379,6 +379,16 @@ public class EightPuzzle
 	}
 
 	/**
+	 * Used to help test same randomized state with both the beam and A* search methods
+	 *
+	 * @return current state of puzzle
+	 */
+	public String getState()
+	{
+		return state;
+	}
+
+	/**
 	 * Helper method for randomizeState method that makes sure that the next random direction does not undo the prior random direction
 	 *
 	 * @param a last direction
@@ -448,20 +458,17 @@ public class EightPuzzle
 		if (bestState == null)
 			throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
 
+		State currentState = null;
+
 		//
 		while (heap.size() > 0 && nodesCounted < maxNodes)
 		{
-			State currentState = heap.poll();
+			currentState = heap.poll();
 
 			// no faster paths can be reached
 			if (currentState.pathToState.size() >= bestState.pathToState.size())
 			{
-				System.out.println("Number of tiles moved: " + currentState.pathToState.size());
-
-				for (Direction d : currentState.directionsToState)
-					System.out.println(d);
-				setState(goalState);
-				return;
+				break;
 			}
 
 			// current state is goal state
@@ -474,6 +481,15 @@ public class EightPuzzle
 			// Add other possible outcomes to heap if it has the possibility of being faster than the current best route
 			else if (currentState.compareToAStar(bestState) < 0)
 				aStarAddPaths(currentState, encountered, heap);
+		}
+
+		if (currentState != null)
+		{
+			System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+
+			for (Direction d : currentState.directionsToState)
+				System.out.println(d);
+			setState(goalState);
 		}
 	}
 
