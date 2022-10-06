@@ -11,20 +11,22 @@ printState
 solveBeam
 printState
 setState 142 b75 368
-maxNodes 21
+maxNodes 20
 solveA-star
-printState
-setState 245 b87 136
+setState 327 641 8b5
 printState
 maxNodes 5
 solveBeam
 printState
-setState 245 b87 136
+setState 327 641 8b5
 printState
-maxNodes 400
+maxNodes 3000
 solveA-star
-printState
 randomizeState 25
 printState
-randomizeState 25
+maxNodes 5
+solveBeam
+randomizeState 10
 printState
+maxNodes 10000
+solveA-star

@@ -19,13 +19,14 @@ public class EightPuzzle
 	{
 		// Current state of this state
 		private String state;
-		// Path to get to this state from initial scrambled position
-		private final LinkedList<String> pathToState;
 		// Directions to get to the current state from the initial scrambled position
 		private final LinkedList<Direction> directionsToState;
+		// estimated distance to solve puzzle
 		private int distanceToSolved;
-		//  = cost to reach current node + estimated cost to reach goal node
+		// aStarWeight = cost to reach current node + estimated cost to reach goal node
 		private int aStarWeight;
+		//
+		private int displacedTiles;
 
 		/**
 		 * @param state current state of puzzle
@@ -33,22 +34,51 @@ public class EightPuzzle
 		public State(String state)
 		{
 			this.state = state;
-			pathToState = new LinkedList<>();
 			directionsToState = new LinkedList<>();
 			calculateAndSetDistanceToSolved();
 		}
 
 		/**
-		 * @param state       current state of puzzle
-		 * @param pathToState path to get to the current state of the puzzle
-		 * @param directions  directions to get to the current state of the puzzle
+		 * @param state      current state of puzzle
+		 * @param directions directions to get to the current state of the puzzle
 		 */
-		public State(String state, LinkedList<String> pathToState, LinkedList<Direction> directions)
+		public State(String state, LinkedList<Direction> directions)
 		{
 			this.state = state;
-			this.pathToState = pathToState;
 			directionsToState = directions;
 			calculateAndSetDistanceToSolved();
+		}
+
+		/**
+		 * Helper method for Beam Search algorithm that returns the prior state of the parameter s using the directions
+		 * in reverse
+		 *
+		 * @param s state to get the prior state of
+		 * @return the prior state of state s
+		 */
+		public static State getPriorState(State s)
+		{
+			if (s.directionsToState.size() == 0)
+				return null;
+
+			Direction lastDirection = s.directionsToState.getLast();
+			State lastState = State.clone(s);
+
+			switch (lastDirection)
+			{
+				case left:
+					lastState.move(Direction.right);
+					return lastState;
+				case right:
+					lastState.move(Direction.left);
+					return lastState;
+				case up:
+					lastState.move(Direction.down);
+					return lastState;
+				default:
+					lastState.move(Direction.up);
+					return lastState;
+			}
 		}
 
 		/**
@@ -60,6 +90,7 @@ public class EightPuzzle
 		{
 			// number of tiles to be moved to get to solved position if each tile ignored other tiles in its path
 			distanceToSolved = 0;
+			displacedTiles = 0;
 
 			for (int i = 0; i < 11; i++)
 			{
@@ -70,6 +101,8 @@ public class EightPuzzle
 
 					if (i != characterGoalLocation)
 					{
+						displacedTiles++;
+
 						// Distance moved in left/right direction
 						distanceToSolved += Math.abs((i % 4) - (characterGoalLocation % 4));
 
@@ -88,7 +121,7 @@ public class EightPuzzle
 		 */
 		public static State clone(State s)
 		{
-			return new State(s.state, (LinkedList<String>) s.pathToState.clone(), (LinkedList<Direction>) s.directionsToState.clone());
+			return new State(s.state, (LinkedList<Direction>) s.directionsToState.clone());
 		}
 
 		/**
@@ -129,7 +162,7 @@ public class EightPuzzle
 				// Swap down
 			else
 				swap(blankIndex, blankIndex + 4, Direction.down);
-
+			directionsToState.add(direction);
 			return true;
 		}
 
@@ -209,6 +242,14 @@ public class EightPuzzle
 		{
 			return aStarWeight - o.aStarWeight;
 		}
+
+		/**
+		 *
+		 */
+		public int compareToAStarH1(State o)
+		{
+			return displacedTiles - o.displacedTiles;
+		}
 	}
 
 	/**
@@ -245,6 +286,9 @@ public class EightPuzzle
 						break;
 					case "solveA-star":
 						this.getClass().getMethod("solveAStar").invoke(this);
+						break;
+					case "solveA-starH1":
+						this.getClass().getMethod("solveAStarH1").invoke(this);
 						break;
 					case "move":
 						this.getClass().getMethod(methodName, Direction.class).invoke(this, Direction.valueOf(methodParameters));
@@ -413,7 +457,7 @@ public class EightPuzzle
 	}
 
 	/**
-	 * Solves the 8-puzzle using an A* algorithm
+	 * Solves the 8-puzzle using an A* algorithm heuristic h2 (sum of displacement for each tile)
 	 *
 	 * @throws Exception if there is no such solution or if the number of moves exceeds the number of moves allowed to search
 	 */
@@ -466,7 +510,7 @@ public class EightPuzzle
 			currentState = heap.poll();
 
 			// no faster paths can be reached
-			if (currentState.pathToState.size() >= bestState.pathToState.size())
+			if (currentState.directionsToState.size() >= bestState.directionsToState.size())
 			{
 				break;
 			}
@@ -485,13 +529,96 @@ public class EightPuzzle
 
 		if (currentState != null)
 		{
-			System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+			System.out.println("Number of tiles moved: " + currentState.directionsToState.size());
 
 			for (Direction d : currentState.directionsToState)
 				System.out.println(d);
 			setState(goalState);
 		}
 	}
+
+	/**
+	 * Solves the 8-puzzle using an A* algorithm using heuristic h1 (number of misplaced tiles). This is by far a less
+	 * effective heuristic than h2, so I made the main solveAStar method use h2
+	 *
+	 * @throws Exception if there is no such solution or if the number of moves exceeds the number of moves allowed to search
+	 */
+	public void solveAStarH1() throws Exception
+	{
+		// list of already encountered states
+		HashSet<State> encountered = new HashSet<>();
+
+		// Heap for determining best choice
+		PriorityQueue<State> heap = new PriorityQueue<>(State::compareToAStarH1);
+		heap.add(new State(state));
+
+		// make sure program does not check too many states
+		int nodesCounted = 0;
+
+		//
+		State bestState = null;
+
+		while (heap.size() > 0 && nodesCounted < maxNodes)
+		{
+			// remove 1st element from queue to test
+			State currentState = heap.poll();
+
+			// If element has not already been checked
+			if (!encountered.contains(currentState))
+			{
+				// If element to test is the goal state
+				if (currentState.state.equals(goalState))
+				{
+					bestState = currentState;
+					break;
+				}
+
+				nodesCounted++;
+
+				// set the current state as encountered and add its directions it can move to into the heap
+				aStarAddPaths(currentState, encountered, heap);
+			}
+		}
+
+		// No such path to goal state
+		if (bestState == null)
+			throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+
+		State currentState = null;
+
+		//
+		while (heap.size() > 0 && nodesCounted < maxNodes)
+		{
+			currentState = heap.poll();
+
+			// no faster paths can be reached
+			if (currentState.directionsToState.size() >= bestState.directionsToState.size())
+			{
+				break;
+			}
+
+			// current state is goal state
+			if (currentState.state.equals(goalState))
+			{
+				bestState = currentState;
+				encountered.add(currentState);
+			}
+
+			// Add other possible outcomes to heap if it has the possibility of being faster than the current best route
+			else if (currentState.compareToAStar(bestState) < 0)
+				aStarAddPaths(currentState, encountered, heap);
+		}
+
+		if (currentState != null)
+		{
+			System.out.println("Number of tiles moved: " + currentState.directionsToState.size());
+
+			for (Direction d : currentState.directionsToState)
+				System.out.println(d);
+			setState(goalState);
+		}
+	}
+
 
 	/**
 	 * Helper method for solveAStar that sets the current state as encountered and adds possible moves to the heap
@@ -509,7 +636,6 @@ public class EightPuzzle
 		State left = State.clone(currentState);
 		if (left.canMove(Direction.left))
 		{
-			left.pathToState.add(currentState.state);
 			left.move(Direction.left);
 			heap.add(left);
 		}
@@ -518,7 +644,6 @@ public class EightPuzzle
 		State right = State.clone(currentState);
 		if (right.canMove(Direction.right))
 		{
-			right.pathToState.add(currentState.state);
 			right.move(Direction.right);
 			heap.add(right);
 		}
@@ -527,7 +652,6 @@ public class EightPuzzle
 		State up = State.clone(currentState);
 		if (up.canMove(Direction.up))
 		{
-			up.pathToState.add(currentState.state);
 			up.move(Direction.up);
 			heap.add(up);
 		}
@@ -536,76 +660,11 @@ public class EightPuzzle
 		State down = State.clone(currentState);
 		if (down.canMove(Direction.down))
 		{
-			down.pathToState.add(currentState.state);
 			down.move(Direction.down);
 			heap.add(down);
 		}
 	}
 
-
-	/*
-	public void solveBeam()
-	{
-
-
-		// List of States that have already been encountered
-		HashSet<State> encountered = new HashSet<>();
-
-		// List of future states to check
-		Queue<State> nextStates = new ArrayDeque<>();
-		nextStates.offer(new State(state));
-
-		//
-		int nodesCounted = 0;
-
-		while (nodesCounted < maxNodes && !nextStates.isEmpty())
-		{
-			State testState = nextStates.remove();
-
-			// make sure testState has not already been checked
-			if (!encountered.contains(testState))
-			{
-				nodesCounted++;
-
-				// testState is the destination
-				if (testState.state.equals(goalState))
-				{
-					System.out.println("Success!\nNumber of nodes counted is: " + nodesCounted);
-					System.out.println("Path is:");
-					System.out.println(goalState);
-					for (String s : testState.pathToState)
-						System.out.println(s);
-					return;
-				}
-
-				// testState is not the destination
-				// Set testState as encountered
-				encountered.add(testState);
-
-				// add possible moves
-				// left
-				State move = getMove(testState.clone(), Direction.left);
-				if (move != null)
-					nextStates.add(move);
-
-				// right
-				move = getMove(testState.clone(), Direction.right);
-				if (move != null)
-					nextStates.add(move);
-
-				// up
-				move = getMove(testState.clone(), Direction.up);
-				if (move != null)
-					nextStates.add(move);
-
-				// down
-				move = getMove(testState.clone(), Direction.down);
-				if (move != null)
-					nextStates.add(move);
-			}
-		}
-	}
-	*/
 	public void BFS() throws Exception
 	{
 		// list of already encountered states
@@ -630,7 +689,7 @@ public class EightPuzzle
 				// If element to test is the goal state
 				if (currentState.state.equals(goalState))
 				{
-					System.out.println("Number of tiles moved: " + currentState.pathToState.size());
+					System.out.println("Number of tiles moved: " + currentState.directionsToState.size());
 
 					for (Direction d : currentState.directionsToState)
 						System.out.println(d);
@@ -648,7 +707,6 @@ public class EightPuzzle
 				State left = State.clone(currentState);
 				if (left.canMove(Direction.left))
 				{
-					left.pathToState.add(currentState.state);
 					left.move(Direction.left);
 					queue.add(left);
 				}
@@ -657,7 +715,6 @@ public class EightPuzzle
 				State right = State.clone(currentState);
 				if (right.canMove(Direction.right))
 				{
-					right.pathToState.add(currentState.state);
 					right.move(Direction.right);
 					queue.add(right);
 				}
@@ -666,7 +723,6 @@ public class EightPuzzle
 				State up = State.clone(currentState);
 				if (up.canMove(Direction.up))
 				{
-					up.pathToState.add(currentState.state);
 					up.move(Direction.up);
 					queue.add(up);
 				}
@@ -675,7 +731,6 @@ public class EightPuzzle
 				State down = State.clone(currentState);
 				if (down.canMove(Direction.down))
 				{
-					down.pathToState.add(currentState.state);
 					down.move(Direction.down);
 					queue.add(down);
 				}
@@ -698,7 +753,7 @@ public class EightPuzzle
 		int numNodesCounted = 0;
 
 		// Keep track of k states
-		int k = (int) maxNodes;
+		int k = maxNodes;
 		State[] states = new State[k];
 		states[0] = new State(state);
 
@@ -717,7 +772,7 @@ public class EightPuzzle
 					// If the current state is the goal state
 					if (s.state.equals(goalState))
 					{
-						System.out.println("Number of tiles moved: " + s.pathToState.size());
+						System.out.println("Number of tiles moved: " + s.directionsToState.size());
 
 						for (Direction d : s.directionsToState)
 							System.out.println(d);
@@ -725,15 +780,12 @@ public class EightPuzzle
 						return;
 					}
 
-					State parent = null;
-					if (s.pathToState.size() > 0)
-						parent = new State(s.pathToState.getLast());
+					State parent = State.getPriorState(s);
 
 					// left successor
 					State left = State.clone(s);
 					if (left.canMove(Direction.left))
 					{
-						left.pathToState.add(s.state);
 						left.move(Direction.left);
 						// Add successor to heap of successors if this isn't undoing the prior move
 						if (parent == null || !parent.equals(left))
@@ -744,7 +796,6 @@ public class EightPuzzle
 					State right = State.clone(s);
 					if (right.canMove(Direction.right))
 					{
-						right.pathToState.add(s.state);
 						right.move(Direction.right);
 						// Add successor to heap of successors if this isn't undoing the prior move
 						if (parent == null || !parent.equals(right))
@@ -755,7 +806,6 @@ public class EightPuzzle
 					State up = State.clone(s);
 					if (up.canMove(Direction.up))
 					{
-						up.pathToState.add(s.state);
 						up.move(Direction.up);
 						// Add successor to heap of successors if this isn't undoing the prior move
 						if (parent == null || !parent.equals(up))
@@ -766,14 +816,12 @@ public class EightPuzzle
 					State down = State.clone(s);
 					if (down.canMove(Direction.down))
 					{
-						down.pathToState.add(s.state);
 						down.move(Direction.down);
 						// Add successor to heap of successors if this isn't undoing the prior move
 						if (parent == null || !parent.equals(down))
 							successors.add(down);
 					}
-				}
-				else
+				} else
 					break;
 			}
 
@@ -800,54 +848,13 @@ public class EightPuzzle
 
 	public static void main(String[] args)
 	{
-		//EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\out\\production\\EightPuzzle\\EightPuzzle1.txt");
-
+		//EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzle.txt");
+		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzleLength.txt");
 		/*
-		//puzzle.setState("432 175 6b8");
-
-		//puzzle.setState("142 3b5 678");
-
-		puzzle.randomizeState(10);
-
-		try
-		{
-			puzzle.solveBeam();
-		} catch (Exception e)
-		{
-			throw new RuntimeException(e);
-		}
-
-		/*
-		puzzle.randomizeState(15);
-
-		//puzzle.setState("12b 345 678");
-
-		//puzzle.printState();
-
-		//puzzle.solveBeam();
-
-		System.out.println("Shuffled:");
-		puzzle.printState();
-
-		try
-		{
-			//puzzle.BFS();
-			puzzle.solveAStar();
-		} catch (Exception e)
-		{
-			throw new RuntimeException(e);
-		}
-
-		//puzzle.printState();
-		 */
-
-		/*
-		State state1 = new State("b12 345 678");
-		System.out.println(state1.state + ": " + state1.aStarWeight);
-		State state2 = new State("125 b48 367");
-		System.out.println(state2.state + ": " + state2.aStarWeight);
-		State state3 = new State("432 175 6b8");
-		System.out.println(state3.state + ": " + state3.aStarWeight);
+		312 64b 785
+		125 648 73b
+		315 246 7b8
+		615 427 b83
 		 */
 	}
 }
