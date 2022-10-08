@@ -855,6 +855,15 @@ public class EightPuzzle
 		125 648 73b
 		315 246 7b8
 		615 427 b83
+
+		setState 31b 762 485
+maxNodes 1024
+printState
+solveA-starH1
+setState 31b 762 485
+solveA-star
+setState 31b 762 485
+solveBeam
 		 */
 	}
 }
