@@ -850,7 +850,7 @@ public class EightPuzzle
 				states[i] = successors.poll();
 		}
 
-		//throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
+		throw new Exception("Either there are no solutions or the number of nodes searched has exceeded the maximum number that can be searched by this program");
 	}
 
 	/**
