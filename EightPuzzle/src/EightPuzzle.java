@@ -25,7 +25,7 @@ public class EightPuzzle
 		private int distanceToSolved;
 		// aStarWeight = cost to reach current node + estimated cost to reach goal node
 		private int aStarWeight;
-		//
+		// number of tiles that aren't in the same spot as the goal state
 		private int displacedTiles;
 
 		/**
@@ -248,7 +248,7 @@ public class EightPuzzle
 		 */
 		public int compareToAStarH1(State o)
 		{
-			return displacedTiles - o.displacedTiles;
+			return (directionsToState.size() + displacedTiles) - (o.displacedTiles + o.directionsToState.size());
 		}
 	}
 
@@ -867,22 +867,10 @@ public class EightPuzzle
 
 	public static void main(String[] args)
 	{
-		//EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzle.txt");
-		EightPuzzle puzzle = new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzleLength.txt");
-		/*
-		312 64b 785
-		125 648 73b
-		315 246 7b8
-		615 427 b83
+		//new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzle.txt");
+		//new EightPuzzle("C:\\Users\\ari\\git\\CSDS391-P1\\EightPuzzle\\src\\TestEightPuzzleLength.txt");
+		new EightPuzzle("TestEightPuzzle.txt");
+		new EightPuzzle("TestEightPuzzleLength.txt");
 
-		setState 31b 762 485
-maxNodes 1024
-printState
-solveA-starH1
-setState 31b 762 485
-solveA-star
-setState 31b 762 485
-solveBeam
-		 */
 	}
 }
