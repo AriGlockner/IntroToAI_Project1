@@ -529,10 +529,17 @@ public class EightPuzzle
 
 		if (currentState != null)
 		{
-			System.out.println("Number of tiles moved: " + currentState.directionsToState.size());
+			System.out.println("Number of tiles moved: " + currentState.directionsToState.size()/2);
+			boolean isOdd = true;
 
 			for (Direction d : currentState.directionsToState)
-				System.out.println(d);
+				if (isOdd)
+				{
+					isOdd = false;
+					System.out.println(d);
+				}
+				else
+					isOdd = true;
 			setState(goalState);
 		}
 	}
@@ -611,10 +618,16 @@ public class EightPuzzle
 
 		if (currentState != null)
 		{
-			System.out.println("Number of tiles moved: " + currentState.directionsToState.size());
-
+			System.out.println("Number of tiles moved: " + currentState.directionsToState.size()/2);
+			boolean isOdd = true;
 			for (Direction d : currentState.directionsToState)
-				System.out.println(d);
+				if (isOdd)
+				{
+					isOdd = false;
+					System.out.println(d);
+				}
+				else
+					isOdd = true;
 			setState(goalState);
 		}
 	}
@@ -772,10 +785,16 @@ public class EightPuzzle
 					// If the current state is the goal state
 					if (s.state.equals(goalState))
 					{
-						System.out.println("Number of tiles moved: " + s.directionsToState.size());
-
+						System.out.println("Number of tiles moved: " + s.directionsToState.size()/2);
+						boolean isOdd = true;
 						for (Direction d : s.directionsToState)
-							System.out.println(d);
+							if (isOdd)
+							{
+								System.out.println(d);
+								isOdd = false;
+							}
+							else
+								isOdd = true;
 						setState(goalState);
 						return;
 					}
