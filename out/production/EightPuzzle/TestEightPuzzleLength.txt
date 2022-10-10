@@ -1,7 +1,11 @@
-maxNodes 32768
-setState 614 73b 852
+maxNodes 65536
+setState 542 b73 168
 printState
 solveA-star
-setState 614 73b 852
+setState 542 b73 168
+printState
+solveBeam
+setState 542 b73 168
+maxNodes 5
 printState
 solveBeam
